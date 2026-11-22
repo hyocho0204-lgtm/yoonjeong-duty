@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>병동 근무표 및 호실 배정</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-button" id="menuButton" aria-label="탐색 메뉴 열기">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="header-brand">
+      <div class="brand-mark">N</div>
+      <div><strong>병동 근무 운영 시스템</strong><span id="currentMonthLabel"></span></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-button" aria-label="알림">🔔<span class="notification-dot"></span></button>
+      <button class="profile-button" aria-label="사용자 메뉴"><span class="avatar">간</span><span class="profile-copy"><strong>근무 관리자</strong><small>병동 운영</small></span></button>
+    </div>
+  </header>
+
+  <aside class="sidebar" id="sidebar">
+    <nav>
+      <button class="nav-item active" data-tab="dashboard">대시보드</button>
+      <button class="nav-item" data-tab="schedule">근무표 생성</button>
+      <button class="nav-item" data-tab="rooms">호실 배정</button>
+      <button class="nav-item" data-tab="stats">근무 통계 및 검증</button>
+      <button class="nav-item" data-tab="settings">설정</button>
+      <button class="nav-item" data-tab="data">데이터 관리 및 출력</button>
+    </nav>
+  </aside>
+
+  <main>
+    <section id="dashboard" class="tab active">
+      <div class="page-heading">
+        <div><h1>대시보드</h1><p>근무·OFF·호실 배정 현황을 한눈에 확인합니다.</p></div>
+        <button class="primary" id="quickGenerate">근무표 자동 생성</button>
+      </div>
+      <div class="cards" id="dashboardCards"></div>
+      <div class="dashboard-grid">
+        <div class="panel"><h2>근무 현황</h2><div id="shiftChart" class="bar-chart"></div></div>
+        <div class="panel"><h2>배정 상태</h2><div id="dashboardErrors"></div></div>
+      </div>
+    </section>
+
+    <section id="schedule" class="tab">
+      <div class="page-heading">
+        <div><h1>근무표 생성</h1><p>필수 규칙을 즉시 검증하고 결과를 수정할 수 있습니다.</p></div>
+        <div class="actions">
+          <button id="generateSchedule">자동 생성</button>
+          <button id="undoSchedule" disabled>실행 취소</button>
+          <button class="primary" id="confirmSchedule">근무표 확정</button>
+        </div>
+      </div>
+      <div id="scheduleMessages" class="message-list"></div>
+      <div class="table-shell"><table id="scheduleTable"></table></div>
+    </section>
+
+    <section id="rooms" class="tab">
+      <div class="page-heading">
+        <div><h1>호실 배정</h1><p>확정된 근무표를 기준으로 호실을 배정합니다.</p></div>
+        <button class="primary" id="generateRooms">호실 자동 배정</button>
+      </div>
+      <div id="roomMessages" class="message-list"></div>
+      <div class="table-shell"><table id="roomTable"></table></div>
+    </section>
+
+    <section id="stats" class="tab">
+      <div class="page-heading">
+        <div><h1>근무 통계 및 검증</h1><p>근무 균형과 법적·내부 운영 기준을 확인합니다.</p></div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="panel"><h2>간호사별 통계</h2><div class="table-shell"><table id="nurseStatsTable"></table></div></div>
+        <div class="panel"><h2>법적 기준 및 병동 내부 규칙</h2><div class="table-shell"><table id="validationTable"></table></div></div>
+      </div>
+    </section>
+
+    <section id="settings" class="tab">
+      <div class="page-heading">
+        <div><h1>설정</h1><p>모든 규칙과 배정 우선순위를 수정할 수 있습니다.</p></div>
+        <div class="actions">
+          <button id="resetSettings">초기값 복원</button>
+          <button class="primary" id="saveSettings">설정 저장</button>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <div class="panel"><h2>근무 기간 및 필요 인원</h2>
+          <div class="form-row"><label>연도/월 <input type="month" id="monthInput"></label></div>
+          <div id="staffRequirementEditor"></div>
+          <h3>추가 정보</h3>
+          <div id="legalityInputs"></div>
+        </div>
+        <div class="panel"><h2>간호사 및 근무 제한</h2><div id="nurseEditor"></div></div>
+        <div class="panel"><h2>근무표 우선순위</h2><ol id="schedulePriority" class="sortable"></ol></div>
+        <div class="panel"><h2>호실 배정 우선순위</h2><ol id="roomPriority" class="sortable"></ol></div>
+        <div class="panel"><h2>공휴일 및 일자별 인원</h2>
+          <textarea id="holidayInput" rows="5" placeholder="YYYY-MM-DD,YYYY-MM-DD"></textarea>
+          <div id="dailyRequirementEditor"></div>
+        </div>
+        <div class="panel"><h2>오프 신청 및 고정 셀</h2>
+          <textarea id="offRequestInput" rows="5" placeholder="간호사명,YYYY-MM-DD&#10;간호사명,YYYY-MM-DD"></textarea>
+          <textarea id="fixedCellInput" rows="5" placeholder="간호사명,YYYY-MM-DD,D"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section id="data" class="tab">
+      <div class="page-heading"><div><h1>데이터 관리 및 출력</h1><p>이전 근무표와 결과를 가져오고 내보냅니다.</p></div></div>
+      <div class="settings-grid">
+        <div class="panel"><h2>이전 근무표 가져오기</h2>
+          <textarea id="previousScheduleInput" rows="10" placeholder="간호사명,YYYY-MM-DD,D,1호&#10;간호사명,YYYY-MM-DD,N,3호"></textarea>
+          <button id="importPrevious">이전 데이터 가져오기</button>
+        </div>
+        <div class="panel"><h2>내보내기</h2>
+          <button id="exportExcel" class="primary">Excel (.xls)</button>
+          <button id="exportSchedulePng">근무표 PNG</button>
+          <button id="exportRoomPng">호실표 PNG</button>
+          <button id="exportJson">JSON 백업</button>
+          <button id="importJsonButton">JSON 복원</button>
+          <input type="file" id="importJsonFile" accept=".json,application/json" hidden>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="nurseDialog">
+    <form method="dialog" id="nurseForm">
+      <h2 id="nurseDialogTitle">간호사 정보</h2>
+      <input type="hidden" id="nurseId">
+      <label>이름 <input id="nurseName" required></label>
+      <label>잔여 연차 <input id="nurseLeave" type="number" min="0"></label>
+      <label>연차 기준 / 고연차 여부 <select id="nurseSenior"><option value="false">일반</option><option value="true">고연차</option></select></label>
+      <label><input id="nurseEnabled" type="checkbox" checked> 배정 대상</label>
+      <label><input id="nurseNight" type="checkbox"> N 전담</label>
+      <label>근무 제한 <input id="nurseRestriction" placeholder="예: D 또는 E,N 또는 ALL"></label>
+      <label>평일만 D 허용 <input id="nurseWeekdayD" type="checkbox"></label>
+      <label>백가은형 D 우선 <input id="nurseDPriority" type="checkbox"></label>
+      <label>고정 호실 <input id="nurseFixedRooms" placeholder="1호,2호"></label>
+      <label>특수 근무 고정 호실 <input id="nurseSpecialFixedRooms" placeholder="1호,2호,3호"></label>
+      <menu><button value="cancel">취소</button><button value="save" id="saveNurse">저장</button></menu>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
